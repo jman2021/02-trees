@@ -23,7 +23,10 @@ nextWeekday Saturday = Monday
 nextWeekday Sunday = Monday
 
 twoBusinessDays :: Day -> Day
-twoBusinessDays d = undefined
+twoBusinessDays Friday = Monday
+twoBusinessDays Saturday = Tuesday
+twoBusinessDays Sunday = Wednesday
+twoBusinessDays day = nextWeekday (nextWeekday day)
 
 data Shape
   = Circle Double Double Double
@@ -42,7 +45,7 @@ data Point = Point {x :: Double, y :: Double}
 
 point1 = Point {y = 1.0, x = 2.0} -- order doesn't matter
 
-point2 = Point 1.0 1.0 -- Be careful, Haskell will let you leave the field names off
+point2 = Point 1.0 20.0 -- Be careful, Haskell will let you leave the field names off
 -- but here the order does matter
 
 x1 = x point1
@@ -50,7 +53,10 @@ x1 = x point1
 distFromOrigin :: Point -> Double
 distFromOrigin Point {x = px, y = py} = sqrt (px * px + py * py)
 
-distFromOrigin' p = undefined
+distFromOrigin' p =
+  let px = x p
+   in let py = y p
+       in sqrt (px * px + py * py)
 
 distFromOrigin'' Point {x = x, y = y} = sqrt (x * x + y * y)
 
@@ -71,12 +77,15 @@ oneTwoThree' :: IntListNE
 oneTwoThree' = 1 `ICons` (2 `ICons` ISingle 3) -- backticks for infix
 
 safeHead :: IntListNE -> Int
-safeHead = undefined
+safeHead (ISingle val) = val
+safeHead (ICons val _) = val
 
+testHeadIL :: Test
 testHeadIL = "headOfIntListNE" ~: safeHead oneTwoThree ~?= 1
 
 sumOfIntListNE :: IntListNE -> Int
-sumOfIntListNE = undefined
+sumOfIntListNE (ISingle val) = val
+sumOfIntListNE (ICons val tl) = val + sumOfIntListNE tl
 
 testSumIL = "sumOfIntListNE" ~: sumOfIntListNE oneTwoThree ~?= 6
 
@@ -89,7 +98,7 @@ justTrue :: Maybe Bool
 justTrue = Just True
 
 justThree :: Maybe Int
-justThree = undefined
+justThree = Just 3
 
 data Either a b = Left a | Right b
 
@@ -111,18 +120,21 @@ exTree =
 
 -- | increment all integers in the tree
 treePlus :: Tree Int -> Int -> Tree Int
-treePlus = undefined
+treePlus Empty val = Empty
+treePlus (Branch node_val lt rt) val = Branch (node_val + val) (treePlus lt val) (treePlus rt val)
 
 testTreePlus = "treePlus" ~: treePlus (Branch 2 Empty Empty) 3 ~?= Branch 5 Empty Empty
 
 infixOrder :: Tree a -> [a]
 infixOrder Empty = []
-infixOrder (Branch x l r) = infixOrder l ++ [x] ++ infixOrder r
+infixOrder (Branch x l r) = infixOrder l ++ (x : infixOrder r)
 
+testInfixOrder :: Test
 testInfixOrder = "infixOrder" ~: infixOrder exTree ~?= [1, 2, 4, 5, 9, 7]
 
 prefixOrder :: Tree a -> [a]
-prefixOrder = undefined
+prefixOrder Empty = []
+prefixOrder (Branch val lt rt) = (val : prefixOrder lt) ++ prefixOrder rt
 
 testPrefixOrder = "prefixOrder" ~: prefixOrder exTree ~?= [5, 2, 1, 4, 9, 7]
 
